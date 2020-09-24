@@ -7,6 +7,7 @@ import (
 type GenericContent interface {
 	Attributes() []Attribute
 	Elements() []Element
+	ExtendedType() Type
 	ContainsText() bool
 	compile(*Schema, *Element)
 }
@@ -31,6 +32,13 @@ func (sc *SimpleContent) Elements() []Element {
 		return sc.Extension.Elements()
 	}
 	return []Element{}
+}
+
+func (sc *SimpleContent) ExtendedType() Type {
+	//if sc.Extension != nil {
+	//	return sc.Extension.typ
+	//}
+	return nil
 }
 
 func (sc *SimpleContent) compile(sch *Schema, parentElement *Element) {
@@ -61,18 +69,28 @@ func (cc *ComplexContent) Elements() []Element {
 	return []Element{}
 }
 
+func (cc *ComplexContent) ExtendedType() Type {
+	if cc.Extension != nil {
+		_, isComplexTyp := cc.Extension.typ.(*ComplexType)
+		if isComplexTyp {
+			return cc.Extension.typ
+		}
+	}
+	return nil
+}
+
 func (cc *ComplexContent) ContainsText() bool {
 	return cc.Extension != nil && cc.Extension.ContainsText()
 }
 
-func (c *ComplexContent) compile(sch *Schema, parentElement *Element) {
-	if c.Extension != nil {
-		c.Extension.compile(sch, parentElement)
+func (cc *ComplexContent) compile(sch *Schema, parentElement *Element) {
+	if cc.Extension != nil {
+		cc.Extension.compile(sch, parentElement)
 	}
-	if c.Restriction != nil {
-		if c.Extension != nil {
+	if cc.Restriction != nil {
+		if cc.Extension != nil {
 			panic("Not implemented: xsd:complexContent defines xsd:restriction and xsd:extension")
 		}
-		c.Restriction.compile(sch)
+		cc.Restriction.compile(sch)
 	}
 }

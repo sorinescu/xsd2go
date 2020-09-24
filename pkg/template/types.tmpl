@@ -9,18 +9,37 @@ import (
     {{- end }}
 )
 
+// SubstitutingElements
+{{range $key, $val := .SubstitutingElements}}
+//   {{ $key.GoTypeName }} substitutes {{ $val.GoForeignModule }}{{ $val.GoTypeName }}
+{{end}}
+
+// SubstitutedElements
+{{range $key, $vals := .SubstitutedElements}}
+//   {{ $key.GoTypeName }}
+    {{range $vals}}
+//     {{.GoForeignModule}}{{.GoTypeName }}
+    {{end}}
+{{end}}
+
 {{range .ExportableElements }}
   // Element
   type {{ .GoName }} struct {
     XMLName xml.Name `xml:{{.Name}}`
+    // ExtendedType
+    {{.ExtendedTypeFullGoName}}
+
+    // Attributes
     {{ range .Attributes }}
         {{ .GoName }} string `xml:"{{.XmlName}},{{.Modifiers}}"`
     {{end }}
 
+    // Elements
     {{ range .Elements }}
       {{ .GoFieldName}} {{.GoMemLayout}}{{.GoForeignModule}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
     {{ end }}
 
+    // ContainsText
     {{- if .ContainsText }}
       Text string `xml:",chardata"`
     {{- end}}
@@ -32,14 +51,20 @@ import (
 // XSD ComplexType declarations
 {{range .ExportableComplexTypes }}
   type {{ .GoName }} struct {
+  // ExtendedType
+  {{.ExtendedTypeFullGoName}}
+
+  // Attributes
   {{ range .Attributes }}
       {{ .GoName }} string `xml:"{{.XmlName}},{{.Modifiers}}"`
   {{end }}
 
+  // Elements
   {{ range .Elements }}
     {{ .GoFieldName}} {{.GoMemLayout}}{{.GoForeignModule}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
   {{end}}
 
+  // ContainsText
   {{- if .ContainsText }}
     Text string `xml:",chardata"`
   {{- end}}

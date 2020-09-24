@@ -11,14 +11,18 @@ type Workspace struct {
 	GoModulesPath string
 }
 
-func NewWorkspace(goModulesPath, xsdPath string) (*Workspace, error) {
+func NewWorkspace(goModule, outputDir, xsdPath string) (*Workspace, error) {
 	ws := Workspace{
 		Cache:         map[string]*Schema{},
-		GoModulesPath: goModulesPath,
+		GoModulesPath: fmt.Sprintf("%s/%s", goModule, outputDir),
 	}
 	var err error
 	_, err = ws.loadXsd(xsdPath)
 	return &ws, err
+}
+
+func (ws *Workspace) GoModule() string {
+	return filepath.Base(ws.GoModulesPath)
 }
 
 func (ws *Workspace) loadXsd(xsdPath string) (*Schema, error) {

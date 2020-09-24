@@ -10,19 +10,20 @@ import (
 
 // Element defines single XML element
 type Element struct {
-	XMLName       xml.Name     `xml:"http://www.w3.org/2001/XMLSchema element"`
-	Name          string       `xml:"name,attr"`
-	nameOverride  string       `xml:"-"`
-	FieldOverride bool         `xml:"-"`
-	Type          reference    `xml:"type,attr"`
-	Ref           reference    `xml:"ref,attr"`
-	MinOccurs     string       `xml:"minOccurs,attr"`
-	MaxOccurs     string       `xml:"maxOccurs,attr"`
-	refElm        *Element     `xml:"-"`
-	ComplexType   *ComplexType `xml:"complexType"`
-	SimpleType    *SimpleType  `xml:"simpleType"`
-	schema        *Schema      `xml:"-"`
-	typ           Type         `xml:"-"`
+	XMLName           xml.Name     `xml:"http://www.w3.org/2001/XMLSchema element"`
+	Name              string       `xml:"name,attr"`
+	nameOverride      string       `xml:"-"`
+	FieldOverride     bool         `xml:"-"`
+	Type              reference    `xml:"type,attr"`
+	Ref               reference    `xml:"ref,attr"`
+	MinOccurs         string       `xml:"minOccurs,attr"`
+	MaxOccurs         string       `xml:"maxOccurs,attr"`
+	SubstitutionGroup reference    `xml:"substitutionGroup,attr"`
+	refElm            *Element     `xml:"-"`
+	ComplexType       *ComplexType `xml:"complexType"`
+	SimpleType        *SimpleType  `xml:"simpleType"`
+	schema            *Schema      `xml:"-"`
+	typ               Type         `xml:"-"`
 }
 
 func (e *Element) Attributes() []Attribute {
@@ -37,6 +38,27 @@ func (e *Element) Elements() []Element {
 		return e.typ.Elements()
 	}
 	return []Element{}
+}
+
+func (e *Element) ExtendedType() Type {
+	if e.typ != nil {
+		return e.typ.ExtendedType()
+	}
+	return nil
+}
+
+func (e *Element) ExtendedTypeFullGoName() string {
+	extType := e.ExtendedType()
+	if extType == nil {
+		return ""
+	}
+
+	pkgName := ""
+	if extType.Schema() != e.schema {
+		pkgName = extType.GoForeignModule()
+	}
+
+	return pkgName + extType.GoTypeName()
 }
 
 func (e *Element) GoFieldName() string {
@@ -68,7 +90,7 @@ func (e *Element) GoMemLayout() string {
 }
 
 func (e *Element) GoTypeName() string {
-	if e.Type != "" {
+	if e.Type != "" && e.typ != nil {
 		return e.typ.GoTypeName()
 	} else if e.isPlainString() {
 		return "string"
@@ -146,6 +168,10 @@ func (e *Element) compile(s *Schema, parentElement *Element) {
 
 	if e.Ref == "" && e.Type == "" && !e.isPlainString() {
 		e.schema.registerInlinedElement(e, parentElement)
+	}
+
+	if e.SubstitutionGroup != "" {
+		e.schema.registerElementSubstitution(e.SubstitutionGroup, e)
 	}
 }
 

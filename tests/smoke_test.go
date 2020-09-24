@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gocomply/xsd2go/pkg/xsd2go"
+	"github.com/sorinescu/xsd2go/pkg/xsd2go"
 	"github.com/stretchr/testify/assert"
 )
 

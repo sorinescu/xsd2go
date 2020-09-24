@@ -11,22 +11,28 @@ import (
 
 // Schema is the root XSD element
 type Schema struct {
-	XMLName         xml.Name           `xml:"http://www.w3.org/2001/XMLSchema schema"`
-	Xmlns           Xmlns              `xml:"-"`
-	TargetNamespace string             `xml:"targetNamespace,attr"`
-	Imports         []Import           `xml:"import"`
-	Elements        []Element          `xml:"element"`
-	Attributes      []Attribute        `xml:"attribute"`
-	ComplexTypes    []ComplexType      `xml:"complexType"`
-	SimpleTypes     []SimpleType       `xml:"simpleType"`
-	importedModules map[string]*Schema `xml:"-"`
-	ModulesPath     string             `xml:"-"`
-	filePath        string             `xml:"-"`
-	inlinedElements []Element          `xml:"-"`
+	XMLName              xml.Name                `xml:"http://www.w3.org/2001/XMLSchema schema"`
+	Xmlns                Xmlns                   `xml:"-"`
+	TargetNamespace      string                  `xml:"targetNamespace,attr"`
+	Imports              []Import                `xml:"import"`
+	Elements             []Element               `xml:"element"`
+	Attributes           []Attribute             `xml:"attribute"`
+	ComplexTypes         []ComplexType           `xml:"complexType"`
+	SimpleTypes          []SimpleType            `xml:"simpleType"`
+	importedModules      map[string]*Schema      `xml:"-"`
+	ModulesPath          string                  `xml:"-"`
+	filePath             string                  `xml:"-"`
+	inlinedElements      []Element               `xml:"-"`
+	substitutedElements  map[*Element][]*Element `xml:"-"`
+	substitutingElements map[*Element]*Element   `xml:"-"`
 }
 
 func parseSchema(f io.Reader) (*Schema, error) {
-	schema := Schema{importedModules: map[string]*Schema{}}
+	schema := Schema{
+		importedModules:      map[string]*Schema{},
+		substitutedElements:  map[*Element][]*Element{},
+		substitutingElements: map[*Element]*Element{},
+	}
 	d := xml.NewDecoder(f)
 
 	if err := d.Decode(&schema); err != nil {
@@ -221,6 +227,14 @@ func (sch *Schema) GoImportsNeeded() []string {
 	return imports
 }
 
+func (sch *Schema) SubstitutedElements() map[*Element][]*Element {
+	return sch.substitutedElements
+}
+
+func (sch *Schema) SubstitutingElements() map[*Element]*Element {
+	return sch.substitutingElements
+}
+
 func (sch *Schema) registerImportedModule(module *Schema) {
 	sch.importedModules[module.GoPackageName()] = module
 }
@@ -242,6 +256,23 @@ func (sch *Schema) registerInlinedElement(el *Element, parentElement *Element) {
 		el.prefixNameWithParent(parentElement)
 		sch.inlinedElements = append(sch.inlinedElements, *el)
 	}
+}
+
+func (sch *Schema) registerElementSubstitution(substGroup reference, el *Element) {
+	substSchema := sch.findReferencedSchemaByPrefix(substGroup.NsPrefix())
+	if substSchema == nil {
+		panic("Internal error: referenced substitution group '" + string(substGroup) + "' schema cannot be found.")
+	}
+	if substSchema != sch {
+		sch.registerImportedModule(substSchema)
+	}
+	substEl := substSchema.GetElement(substGroup.Name())
+	if substEl == nil {
+		panic("Internal error: referenced substitution group '" + string(substGroup) + "' cannot be found.")
+	}
+
+	sch.substitutingElements[el] = substEl
+	substSchema.substitutedElements[substEl] = append(substSchema.substitutedElements[substEl], el)
 }
 
 type Import struct {

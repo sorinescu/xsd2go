@@ -9,9 +9,12 @@ import (
 type Type interface {
 	GoName() string
 	GoTypeName() string
+	GoForeignModule() string
 	Schema() *Schema
 	Attributes() []Attribute
 	Elements() []Element
+	ExtendedType() Type
+	ExtendedTypeFullGoName() string
 	ContainsText() bool
 	compile(*Schema, *Element)
 }
@@ -47,12 +50,40 @@ func (ct *ComplexType) Elements() []Element {
 	return []Element{}
 }
 
+func (ct *ComplexType) ExtendedType() Type {
+	if ct.content != nil {
+		return ct.content.ExtendedType()
+	}
+	return nil
+}
+
+func (ct *ComplexType) ExtendedTypeFullGoName() string {
+	extType := ct.ExtendedType()
+	if extType == nil {
+		return ""
+	}
+
+	pkgName := ""
+	if extType.Schema() != ct.schema {
+		pkgName = extType.GoForeignModule()
+	}
+
+	return pkgName + extType.GoTypeName()
+}
+
 func (ct *ComplexType) GoName() string {
 	return strcase.ToCamel(ct.Name)
 }
 
 func (ct *ComplexType) GoTypeName() string {
 	return ct.GoName()
+}
+
+func (ct *ComplexType) GoForeignModule() string {
+	if ct.schema == nil {
+		return ""
+	}
+	return ct.schema.GoPackageName() + "."
 }
 
 func (ct *ComplexType) ContainsInnerXml() bool {
@@ -132,6 +163,13 @@ func (st *SimpleType) GoTypeName() string {
 	return "string"
 }
 
+func (st *SimpleType) GoForeignModule() string {
+	if st.schema == nil {
+		return ""
+	}
+	return st.schema.GoPackageName() + "."
+}
+
 func (st *SimpleType) Schema() *Schema {
 	return st.schema
 }
@@ -148,6 +186,14 @@ func (st *SimpleType) Elements() []Element {
 	return []Element{}
 }
 
+func (st *SimpleType) ExtendedType() Type {
+	return nil
+}
+
+func (st *SimpleType) ExtendedTypeFullGoName() string {
+	return ""
+}
+
 func (st *SimpleType) ContainsText() bool {
 	return true
 }
@@ -158,8 +204,12 @@ func (st staticType) GoName() string {
 	return string(st)
 }
 
-func (ct staticType) GoTypeName() string {
-	return ct.GoName()
+func (st staticType) GoTypeName() string {
+	return st.GoName()
+}
+
+func (st staticType) GoForeignModule() string {
+	return ""
 }
 
 func (st staticType) Attributes() []Attribute {
@@ -168,6 +218,14 @@ func (st staticType) Attributes() []Attribute {
 
 func (st staticType) Elements() []Element {
 	return []Element{}
+}
+
+func (st staticType) ExtendedType() Type {
+	return nil
+}
+
+func (st staticType) ExtendedTypeFullGoName() string {
+	return ""
 }
 
 func (st staticType) Schema() *Schema {

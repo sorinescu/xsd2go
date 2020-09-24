@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/gocomply/xsd2go/pkg/xsd2go"
+	"github.com/sorinescu/xsd2go/pkg/xsd2go"
 	"github.com/urfave/cli"
 	"os"
 )

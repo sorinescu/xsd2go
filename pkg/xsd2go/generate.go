@@ -3,13 +3,13 @@ package xsd2go
 import (
 	"fmt"
 
-	"github.com/gocomply/xsd2go/pkg/template"
-	"github.com/gocomply/xsd2go/pkg/xsd"
+	"github.com/sorinescu/xsd2go/pkg/template"
+	"github.com/sorinescu/xsd2go/pkg/xsd"
 )
 
 func Convert(xsdPath, goModule, outputDir string) error {
 	fmt.Printf("Processing '%s'\n", xsdPath)
-	ws, err := xsd.NewWorkspace(fmt.Sprintf("%s/%s", goModule, outputDir), xsdPath)
+	ws, err := xsd.NewWorkspace(goModule, outputDir, xsdPath)
 	if err != nil {
 		return err
 	}
@@ -21,6 +21,10 @@ func Convert(xsdPath, goModule, outputDir string) error {
 		if err := template.GenerateTypes(sch, outputDir); err != nil {
 			return err
 		}
+	}
+
+	if err := template.GenerateGlobals(ws, outputDir); err != nil {
+		return err
 	}
 
 	return nil

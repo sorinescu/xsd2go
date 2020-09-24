@@ -14,10 +14,10 @@ type Extension struct {
 
 func (ext *Extension) Attributes() []Attribute {
 	attrs := ext.AttributesDirect
-	if ext.typ != nil {
-		attrs = append(attrs, ext.typ.Attributes()...)
-		attrs = deduplicateAttributes(attrs)
-	}
+	//if ext.typ != nil {
+	//	attrs = append(attrs, ext.typ.Attributes()...)
+	//	attrs = deduplicateAttributes(attrs)
+	//}
 	return attrs
 }
 
@@ -26,10 +26,10 @@ func (ext *Extension) Elements() []Element {
 	if ext.Sequence != nil {
 		elements = append(elements, ext.Sequence.Elements()...)
 	}
-	if ext.typ != nil {
-		elements = append(elements, ext.typ.Elements()...)
-		elements = deduplicateElements(elements)
-	}
+	//if ext.typ != nil {
+	//	elements = append(elements, ext.typ.Elements()...)
+	//	elements = deduplicateElements(elements)
+	//}
 
 	attrs := ext.Attributes()
 	goNames := make(map[string]struct{}, len(elements)+len(attrs))
