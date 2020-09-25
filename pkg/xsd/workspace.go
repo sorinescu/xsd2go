@@ -7,14 +7,19 @@ import (
 )
 
 type Workspace struct {
-	Cache         map[string]*Schema
-	GoModulesPath string
+	Cache             map[string]*Schema
+	IgnoredNamespaces map[string]struct{}
+	GoModulesPath     string
 }
 
-func NewWorkspace(goModule, outputDir, xsdPath string) (*Workspace, error) {
+func NewWorkspace(goModule, outputDir, xsdPath string, ignoredNamesapces []string) (*Workspace, error) {
 	ws := Workspace{
 		Cache:         map[string]*Schema{},
+		IgnoredNamespaces: map[string]struct{}{},
 		GoModulesPath: fmt.Sprintf("%s/%s", goModule, outputDir),
+	}
+	for _, ns := range ignoredNamesapces {
+		ws.IgnoredNamespaces[ns] = struct{}{}
 	}
 	var err error
 	_, err = ws.loadXsd(xsdPath)
@@ -46,9 +51,21 @@ func (ws *Workspace) loadXsd(xsdPath string) (*Schema, error) {
 	schema.filePath = xsdPath
 	ws.Cache[xsdPath] = schema
 
+	if len(ws.IgnoredNamespaces) != 0 {
+		imports := make([]Import, 0, len(schema.Imports))
+		for i := range schema.Imports {
+			if _, found := ws.IgnoredNamespaces[schema.Imports[i].Namespace]; !found {
+				imports = append(imports, schema.Imports[i])
+			} else {
+				fmt.Printf("\t\tIgnoring XML namespace %q\n", schema.Imports[i].Namespace)
+			}
+		}
+		schema.Imports = imports
+	}
+
 	dir := filepath.Dir(xsdPath)
-	for idx, _ := range schema.Imports {
-		if err := schema.Imports[idx].load(ws, dir); err != nil {
+	for i := range schema.Imports {
+		if err := schema.Imports[i].load(ws, dir); err != nil {
 			return nil, err
 		}
 	}

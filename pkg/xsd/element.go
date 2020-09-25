@@ -46,7 +46,7 @@ func (e *Element) GoBaseTypeName() string {
 	//if e.typ != nil {
 	//	return e.typ.GoTypeName()
 	//}
-	if e.Type != "" && e.typ != nil {
+	if e.Type != "" {
 		return e.typ.GoTypeName()
 	} else if e.isPlainString() {
 		return "string"
@@ -83,24 +83,21 @@ func (e *Element) GoMemLayout() string {
 }
 
 func (e *Element) GoTypeName() string {
-	//if e.Type != "" && e.typ != nil {
-	//	return e.typ.GoTypeName()
-	//} else if e.isPlainString() {
-	//	return "string"
-	//}
-	//
-	if e.nameOverride != "" {
-		return e.schema.GoTypePrefix() + strcase.ToCamel(e.nameOverride)
+	if e.isInlinedElement() {
+		return e.schema.GoTypePrefix() + e.GoName()
+	}
+	if e.typ != nil && e.typ.GoTypeName() != "" {
+		return e.typ.GoTypeName()
 	}
 
-	name := e.Name
-	if name == "" {
+	if e.Name == "" {
 		return e.refElm.GoTypeName()
 	}
-	if e.FieldOverride {
-		name += "Elm"
-	}
-	return e.schema.GoTypePrefix() + strcase.ToCamel(name)
+	return e.schema.GoTypePrefix() + strcase.ToCamel(e.Name) + "Elem"
+}
+
+func (e *Element) isExportable() bool {
+	return e.typ == nil || e.typ.GoTypeName() == "" || e.isInlinedElement()
 }
 
 func (e *Element) SubstitutingElements() []*Element {
@@ -178,13 +175,17 @@ func (e *Element) compile(s *Schema, parentElement *Element) {
 		}
 	}
 
-	if e.Ref == "" && e.Type == "" && !e.isPlainString() {
+	if e.isInlinedElement() {
 		e.schema.registerInlinedElement(e, parentElement)
 	}
 
 	if e.SubstitutionGroup != "" {
 		e.schema.registerElementSubstitution(e.SubstitutionGroup, e)
 	}
+}
+
+func (e *Element) isInlinedElement() bool {
+	return e.Ref == "" && e.Type == "" && !e.isPlainString()
 }
 
 func (e *Element) prefixNameWithParent(parentElement *Element) {

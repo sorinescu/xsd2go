@@ -156,8 +156,21 @@ func (sch *Schema) Empty() bool {
 	return len(sch.Elements) == 0 && len(sch.ComplexTypes) == 0
 }
 
-func (sch *Schema) ExportableElements() []Element {
-	return append(sch.Elements, sch.inlinedElements...)
+func (sch *Schema) ExportableElements() []*Element {
+	var expElems []*Element
+	for i := range sch.Elements {
+		el := &sch.Elements[i]
+		if el.isExportable() {
+			expElems = append(expElems, el)
+		}
+	}
+	for i := range sch.inlinedElements {
+		el := &sch.inlinedElements[i]
+		if el.isExportable() {
+			expElems = append(expElems, el)
+		}
+	}
+	return expElems
 }
 
 func (sch *Schema) ExportableComplexTypes() []ComplexType {

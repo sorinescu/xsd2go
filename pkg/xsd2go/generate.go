@@ -7,9 +7,10 @@ import (
 	"github.com/sorinescu/xsd2go/pkg/xsd"
 )
 
-func Convert(xsdPath, goModule, outputDir string) error {
+func Convert(xsdPath, goModule, outputDir string, ignoredNamespaces []string) error {
+	fmt.Printf("Ignoring namespaces: %s\n", ignoredNamespaces)
 	fmt.Printf("Processing '%s'\n", xsdPath)
-	ws, err := xsd.NewWorkspace(goModule, outputDir, xsdPath)
+	ws, err := xsd.NewWorkspace(goModule, outputDir, xsdPath, ignoredNamespaces)
 	if err != nil {
 		return err
 	}

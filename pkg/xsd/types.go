@@ -9,11 +9,10 @@ import (
 type Type interface {
 	GoName() string
 	GoTypeName() string
-	//GoForeignModule() string
+	GoBaseTypeName() string
 	Schema() *Schema
 	Attributes() []Attribute
 	Elements() []Element
-	GoBaseTypeName() string
 	ContainsText() bool
 	compile(*Schema, *Element)
 }
