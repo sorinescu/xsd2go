@@ -7,8 +7,8 @@ import (
 type GenericContent interface {
 	Attributes() []Attribute
 	Elements() []Element
-	ExtendedType() Type
 	ContainsText() bool
+	GoBaseTypeName() string
 	compile(*Schema, *Element)
 }
 type SimpleContent struct {
@@ -34,11 +34,8 @@ func (sc *SimpleContent) Elements() []Element {
 	return []Element{}
 }
 
-func (sc *SimpleContent) ExtendedType() Type {
-	//if sc.Extension != nil {
-	//	return sc.Extension.typ
-	//}
-	return nil
+func (sc *SimpleContent) GoBaseTypeName() string {
+	return ""
 }
 
 func (sc *SimpleContent) compile(sch *Schema, parentElement *Element) {
@@ -69,14 +66,14 @@ func (cc *ComplexContent) Elements() []Element {
 	return []Element{}
 }
 
-func (cc *ComplexContent) ExtendedType() Type {
+func (cc *ComplexContent) GoBaseTypeName() string {
 	if cc.Extension != nil {
 		_, isComplexTyp := cc.Extension.typ.(*ComplexType)
 		if isComplexTyp {
-			return cc.Extension.typ
+			return cc.Extension.typ.GoTypeName()
 		}
 	}
-	return nil
+	return ""
 }
 
 func (cc *ComplexContent) ContainsText() bool {

@@ -27,5 +27,10 @@ func (s *Sequence) compile(sch *Schema, parentElement *Element) {
 		c.compile(sch, parentElement)
 
 		s.allElements = append(s.allElements, c.Elements...)
+
+		for idy, _ := range c.Sequences {
+			s2 := &c.Sequences[idy]
+			s.allElements = append(s.allElements, s2.allElements...)
+		}
 	}
 }

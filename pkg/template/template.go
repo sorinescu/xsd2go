@@ -7,7 +7,6 @@ import (
 	"go/format"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"text/template"
 
 	"github.com/markbates/pkger"
@@ -20,13 +19,11 @@ func GenerateTypes(schema *xsd.Schema, outputDir string) error {
 		return err
 	}
 
-	packageName := schema.GoPackageName()
-	dir := filepath.Join(outputDir, packageName)
-	err = os.MkdirAll(dir, os.FileMode(0722))
+	err = os.MkdirAll(outputDir, os.FileMode(0722))
 	if err != nil {
 		return err
 	}
-	goFile := fmt.Sprintf("%s/models.go", dir)
+	goFile := fmt.Sprintf("%s/%s_models.go", outputDir, schema.GoModelsFilePrefix())
 	fmt.Printf("\tGenerating '%s'\n", goFile)
 	f, err := os.Create(goFile)
 	if err != nil {

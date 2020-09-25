@@ -27,38 +27,31 @@ type Element struct {
 }
 
 func (e *Element) Attributes() []Attribute {
-	if e.typ != nil {
+	// Only for anonymous types, the rest "inherit" the type struct
+	if e.typ != nil && e.typ.GoName() == "" {
 		return e.typ.Attributes()
 	}
 	return []Attribute{}
 }
 
 func (e *Element) Elements() []Element {
-	if e.typ != nil {
+	// Only for anonymous types, the rest "inherit" the type struct
+	if e.typ != nil && e.typ.GoName() == "" {
 		return e.typ.Elements()
 	}
 	return []Element{}
 }
 
-func (e *Element) ExtendedType() Type {
-	if e.typ != nil {
-		return e.typ.ExtendedType()
+func (e *Element) GoBaseTypeName() string {
+	//if e.typ != nil {
+	//	return e.typ.GoTypeName()
+	//}
+	if e.Type != "" && e.typ != nil {
+		return e.typ.GoTypeName()
+	} else if e.isPlainString() {
+		return "string"
 	}
-	return nil
-}
-
-func (e *Element) ExtendedTypeFullGoName() string {
-	extType := e.ExtendedType()
-	if extType == nil {
-		return ""
-	}
-
-	pkgName := ""
-	if extType.Schema() != e.schema {
-		pkgName = extType.GoForeignModule()
-	}
-
-	return pkgName + extType.GoTypeName()
+	return ""
 }
 
 func (e *Element) GoFieldName() string {
@@ -83,34 +76,53 @@ func (e *Element) GoMemLayout() string {
 	if e.isArray() {
 		return "[]"
 	}
-	if (e.MaxOccurs == "1" || e.MaxOccurs == "") && e.MinOccurs == "0" && e.GoTypeName() != "string" {
+	if (e.MaxOccurs == "1" || e.MaxOccurs == "") && e.MinOccurs == "0" && e.GoBaseTypeName() != "string" {
 		return "*"
 	}
 	return ""
 }
 
 func (e *Element) GoTypeName() string {
-	if e.Type != "" && e.typ != nil {
-		return e.typ.GoTypeName()
-	} else if e.isPlainString() {
-		return "string"
-	}
-	return e.GoName()
-}
-
-func (e *Element) GoForeignModule() string {
-	foreignSchema := (*Schema)(nil)
-	if e.refElm != nil {
-		foreignSchema = e.refElm.schema
-	} else if e.typ != nil {
-		foreignSchema = e.typ.Schema()
+	//if e.Type != "" && e.typ != nil {
+	//	return e.typ.GoTypeName()
+	//} else if e.isPlainString() {
+	//	return "string"
+	//}
+	//
+	if e.nameOverride != "" {
+		return e.schema.GoTypePrefix() + strcase.ToCamel(e.nameOverride)
 	}
 
-	if foreignSchema != nil && foreignSchema != e.schema {
-		return foreignSchema.GoPackageName() + "."
+	name := e.Name
+	if name == "" {
+		return e.refElm.GoTypeName()
 	}
-	return ""
+	if e.FieldOverride {
+		name += "Elm"
+	}
+	return e.schema.GoTypePrefix() + strcase.ToCamel(name)
 }
+
+func (e *Element) SubstitutingElements() []*Element {
+	if e.Name == "" {
+		return e.refElm.SubstitutingElements()
+	}
+	return e.schema.SubstitutedElements()[e]
+}
+
+//func (e *Element) GoForeignModule() string {
+//	foreignSchema := (*Schema)(nil)
+//	if e.refElm != nil {
+//		foreignSchema = e.refElm.schema
+//	} else if e.typ != nil {
+//		foreignSchema = e.typ.Schema()
+//	}
+//
+//	if foreignSchema != nil && foreignSchema != e.schema {
+//		return foreignSchema.GoPackageName() + "."
+//	}
+//	return ""
+//}
 
 func (e *Element) XmlName() string {
 	name := e.Name

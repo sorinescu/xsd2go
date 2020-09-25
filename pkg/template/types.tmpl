@@ -11,23 +11,24 @@ import (
 
 // SubstitutingElements
 {{range $key, $val := .SubstitutingElements}}
-//   {{ $key.GoTypeName }} substitutes {{ $val.GoForeignModule }}{{ $val.GoTypeName }}
+//   {{ $key.GoName }} substitutes {{ $val.GoName }}
 {{end}}
 
 // SubstitutedElements
 {{range $key, $vals := .SubstitutedElements}}
-//   {{ $key.GoTypeName }}
+//   {{ $key.GoName }}
     {{range $vals}}
-//     {{.GoForeignModule}}{{.GoTypeName }}
+//       substituted by {{.GoName }}
     {{end}}
 {{end}}
 
 {{range .ExportableElements }}
   // Element
-  type {{ .GoName }} struct {
+  type {{ .GoTypeName }} struct {
     XMLName xml.Name `xml:{{.Name}}`
-    // ExtendedType
-    {{.ExtendedTypeFullGoName}}
+
+    // BaseType
+    {{.GoBaseTypeName}}
 
     // Attributes
     {{ range .Attributes }}
@@ -36,7 +37,13 @@ import (
 
     // Elements
     {{ range .Elements }}
-      {{ .GoFieldName}} {{.GoMemLayout}}{{.GoForeignModule}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+      {{ $el := . -}}
+      {{ .GoFieldName}} {{.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+
+      {{ range .SubstitutingElements }}
+        // Substitution for '{{ $el.GoName }}'
+        {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+      {{ end }}
     {{ end }}
 
     // ContainsText
@@ -50,9 +57,9 @@ import (
 
 // XSD ComplexType declarations
 {{range .ExportableComplexTypes }}
-  type {{ .GoName }} struct {
-  // ExtendedType
-  {{.ExtendedTypeFullGoName}}
+type {{ .GoTypeName }} struct {
+  // BaseType
+  {{.GoBaseTypeName}}
 
   // Attributes
   {{ range .Attributes }}
@@ -61,7 +68,14 @@ import (
 
   // Elements
   {{ range .Elements }}
-    {{ .GoFieldName}} {{.GoMemLayout}}{{.GoForeignModule}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+    {{ $el := . -}}
+    {{ .GoFieldName}} {{.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+
+    // Substs
+    {{ range .SubstitutingElements }}
+      // Substitution for '{{ $el.GoName }}'
+      {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+    {{ end }}
   {{end}}
 
   // ContainsText
@@ -71,5 +85,5 @@ import (
   {{- if .ContainsInnerXml }}
     InnerXml string `xml:",innerxml"`
   {{- end}}
-  }
+}
 {{end}}

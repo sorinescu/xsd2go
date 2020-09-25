@@ -5,11 +5,12 @@ import (
 )
 
 type Choice struct {
-	XMLName   xml.Name  `xml:"http://www.w3.org/2001/XMLSchema choice"`
-	MinOccurs string    `xml:"minOccurs,attr"`
-	MaxOccurs string    `xml:"maxOccurs,attr"`
-	Elements  []Element `xml:"element"`
-	schema    *Schema   `xml:"-"`
+	XMLName   xml.Name   `xml:"http://www.w3.org/2001/XMLSchema choice"`
+	MinOccurs string     `xml:"minOccurs,attr"`
+	MaxOccurs string     `xml:"maxOccurs,attr"`
+	Elements  []Element  `xml:"element"`
+	Sequences []Sequence `xml:"sequence"`
+	schema    *Schema    `xml:"-"`
 }
 
 func (c *Choice) compile(sch *Schema, parentElement *Element) {
@@ -25,5 +26,10 @@ func (c *Choice) compile(sch *Schema, parentElement *Element) {
 		if el.MinOccurs == "" {
 			el.MinOccurs = "0"
 		}
+	}
+
+	for idx, _ := range c.Sequences {
+		seq := &c.Sequences[idx]
+		seq.compile(sch, parentElement)
 	}
 }

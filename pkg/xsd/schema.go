@@ -3,6 +3,7 @@ package xsd
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/iancoleman/strcase"
 	"io"
 	"path/filepath"
 	"sort"
@@ -19,8 +20,8 @@ type Schema struct {
 	Attributes           []Attribute             `xml:"attribute"`
 	ComplexTypes         []ComplexType           `xml:"complexType"`
 	SimpleTypes          []SimpleType            `xml:"simpleType"`
-	importedModules      map[string]*Schema      `xml:"-"`
 	ModulesPath          string                  `xml:"-"`
+	importedModules      map[string]*Schema      `xml:"-"`
 	filePath             string                  `xml:"-"`
 	inlinedElements      []Element               `xml:"-"`
 	substitutedElements  map[*Element][]*Element `xml:"-"`
@@ -210,7 +211,19 @@ func (sch *Schema) GetType(name string) Type {
 	return nil
 }
 
+//func (sch *Schema) GoPackageName() string {
+//	xmlnsPrefix := sch.Xmlns.PrefixByUri(sch.TargetNamespace)
+//	if xmlnsPrefix == "" {
+//		xmlnsPrefix = strings.TrimSuffix(filepath.Base(sch.filePath), ".xsd")
+//	}
+//	return strings.ReplaceAll(xmlnsPrefix, "-", "_")
+//}
+
 func (sch *Schema) GoPackageName() string {
+	return filepath.Base(sch.ModulesPath)
+}
+
+func (sch *Schema) xmlnsPrefix() string {
 	xmlnsPrefix := sch.Xmlns.PrefixByUri(sch.TargetNamespace)
 	if xmlnsPrefix == "" {
 		xmlnsPrefix = strings.TrimSuffix(filepath.Base(sch.filePath), ".xsd")
@@ -218,11 +231,19 @@ func (sch *Schema) GoPackageName() string {
 	return strings.ReplaceAll(xmlnsPrefix, "-", "_")
 }
 
+func (sch *Schema) GoModelsFilePrefix() string {
+	return sch.xmlnsPrefix()
+}
+
+func (sch *Schema) GoTypePrefix() string {
+	return strcase.ToCamel(sch.xmlnsPrefix())
+}
+
 func (sch *Schema) GoImportsNeeded() []string {
 	imports := []string{"encoding/xml"}
-	for _, importedMod := range sch.importedModules {
-		imports = append(imports, fmt.Sprintf("%s/%s", sch.ModulesPath, importedMod.GoPackageName()))
-	}
+	//for _, importedMod := range sch.importedModules {
+	//	imports = append(imports, fmt.Sprintf("%s/%s", sch.ModulesPath, importedMod.GoPackageName()))
+	//}
 	sort.Strings(imports)
 	return imports
 }
@@ -236,7 +257,7 @@ func (sch *Schema) SubstitutingElements() map[*Element]*Element {
 }
 
 func (sch *Schema) registerImportedModule(module *Schema) {
-	sch.importedModules[module.GoPackageName()] = module
+	sch.importedModules[module.xmlnsPrefix()] = module
 }
 
 // Some elements are not defined at the top-level, rather these are inlined in the complexType definitions
