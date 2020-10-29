@@ -26,18 +26,31 @@ type Schema struct {
 	inlinedElements      []Element               `xml:"-"`
 	substitutedElements  map[*Element][]*Element `xml:"-"`
 	substitutingElements map[*Element]*Element   `xml:"-"`
+	ignoredSubsts        map[string]struct{}     `xml:"-"`
 }
 
-func parseSchema(f io.Reader) (*Schema, error) {
+func parseSchema(f io.Reader, ignoredSubsts []string) (*Schema, error) {
 	schema := Schema{
 		importedModules:      map[string]*Schema{},
 		substitutedElements:  map[*Element][]*Element{},
 		substitutingElements: map[*Element]*Element{},
+		ignoredSubsts:        map[string]struct{}{},
 	}
 	d := xml.NewDecoder(f)
 
 	if err := d.Decode(&schema); err != nil {
 		return nil, fmt.Errorf("Error decoding XSD: %s", err)
+	}
+
+	for _, s := range ignoredSubsts {
+		parts := strings.Split(s, ":")
+		name := parts[len(parts)-1]
+		ns := strings.Join(parts[:len(parts)-1], ":")
+
+		if schema.TargetNamespace == ns {
+			fmt.Printf("\t\tIgnoring substitution of %s in namespace %s\n", name, schema.TargetNamespace)
+			schema.ignoredSubsts[name] = struct{}{}
+		}
 	}
 
 	return &schema, nil
@@ -303,6 +316,11 @@ func (sch *Schema) registerElementSubstitution(substGroup reference, el *Element
 	substEl := substSchema.GetElement(substGroup.Name())
 	if substEl == nil {
 		panic("Internal error: referenced substitution group '" + string(substGroup) + "' cannot be found.")
+	}
+
+	if _, ignore := substSchema.ignoredSubsts[el.XmlName()]; ignore {
+		fmt.Printf("\t\tIgnoring substitution of %s\n", el.XmlName())
+		return
 	}
 
 	sch.substitutingElements[el] = substEl

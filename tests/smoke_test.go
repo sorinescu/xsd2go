@@ -29,5 +29,5 @@ func assertConvertsFine(t *testing.T, xsdPath string) {
 
 	goModule := "user.com/private"
 
-	err = xsd2go.Convert(xsdPath, goModule, outputDir)
+	err = xsd2go.Convert(xsdPath, goModule, outputDir, nil, nil)
 }

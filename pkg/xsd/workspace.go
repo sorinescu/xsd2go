@@ -9,16 +9,18 @@ import (
 type Workspace struct {
 	Cache             map[string]*Schema
 	IgnoredNamespaces map[string]struct{}
+	IgnoredSubsts     []string
 	GoModulesPath     string
 }
 
-func NewWorkspace(goModule, outputDir, xsdPath string, ignoredNamesapces []string) (*Workspace, error) {
+func NewWorkspace(goModule, outputDir, xsdPath string, ignoredNamespaces []string, ignoredSubsts []string) (*Workspace, error) {
 	ws := Workspace{
-		Cache:         map[string]*Schema{},
+		Cache:             map[string]*Schema{},
 		IgnoredNamespaces: map[string]struct{}{},
-		GoModulesPath: fmt.Sprintf("%s/%s", goModule, outputDir),
+		IgnoredSubsts:     ignoredSubsts,
+		GoModulesPath:     fmt.Sprintf("%s/%s", goModule, outputDir),
 	}
-	for _, ns := range ignoredNamesapces {
+	for _, ns := range ignoredNamespaces {
 		ws.IgnoredNamespaces[ns] = struct{}{}
 	}
 	var err error
@@ -43,7 +45,7 @@ func (ws *Workspace) loadXsd(xsdPath string) (*Schema, error) {
 	}
 	defer f.Close()
 
-	schema, err := parseSchema(f)
+	schema, err := parseSchema(f, ws.IgnoredSubsts)
 	if err != nil {
 		return nil, err
 	}

@@ -27,6 +27,10 @@ var convert = cli.Command{
 			Name:  "ignoreNS",
 			Usage: "Ignore XML namespaces (don't import and don't generate types)",
 		},
+		&cli.StringSliceFlag{
+			Name:  "ignoreSubst",
+			Usage: "Ignore XML element substitution; name is like 'http://oval.mitre.org/XMLSchema/oval-common-5:notes'",
+		},
 	},
 	Before: func(c *cli.Context) error {
 		if c.NArg() != 3 {
@@ -37,7 +41,8 @@ var convert = cli.Command{
 	Action: func(c *cli.Context) error {
 		xsdFile, goModule, outputDir := c.Args()[0], c.Args()[1], c.Args()[2]
 		ignoredNamespaces := c.StringSlice("ignoreNS")
-		err := xsd2go.Convert(xsdFile, goModule, outputDir, ignoredNamespaces)
+		ignoredSubsts := c.StringSlice("ignoreSubst")
+		err := xsd2go.Convert(xsdFile, goModule, outputDir, ignoredNamespaces, ignoredSubsts)
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}
