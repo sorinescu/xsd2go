@@ -107,6 +107,13 @@ func (e *Element) SubstitutingElements() []*Element {
 	return e.schema.SubstitutedElements()[e]
 }
 
+func (e *Element) SubstitutedElement() *Element {
+	if e.Name == "" {
+		return e.refElm.SubstitutedElement()
+	}
+	return e.schema.SubstitutingElements()[e]
+}
+
 //func (e *Element) GoForeignModule() string {
 //	foreignSchema := (*Schema)(nil)
 //	if e.refElm != nil {
@@ -146,6 +153,10 @@ func (e *Element) isArray() bool {
 }
 
 func (e *Element) compile(s *Schema, parentElement *Element) {
+	if e.schema != nil {
+		return	// already compiled
+	}
+
 	e.schema = s
 	if e.ComplexType != nil {
 		e.typ = e.ComplexType

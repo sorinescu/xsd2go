@@ -27,6 +27,7 @@ type Schema struct {
 	substitutedElements  map[*Element][]*Element `xml:"-"`
 	substitutingElements map[*Element]*Element   `xml:"-"`
 	ignoredSubsts        map[string]struct{}     `xml:"-"`
+	compiled             bool                    `xml:"-"`
 }
 
 func parseSchema(f io.Reader, ignoredSubsts []string) (*Schema, error) {
@@ -65,6 +66,12 @@ func (sch *Schema) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 func (sch *Schema) compile() {
+	if sch.compiled {
+		return
+	}
+
+	sch.compiled = true
+
 	for idx, _ := range sch.Elements {
 		el := &sch.Elements[idx]
 		el.compile(sch, nil)
@@ -109,6 +116,7 @@ func (sch *Schema) findReferencedType(ref reference) Type {
 		panic("Internal error: referenced type '" + string(ref) + "' cannot be found.")
 	}
 	if innerSchema != sch {
+		innerSchema.compile() // Make sure the types are compiled
 		sch.registerImportedModule(innerSchema)
 	}
 	return innerSchema.GetType(ref.Name())

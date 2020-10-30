@@ -81,6 +81,10 @@ func (ext *Extension) ContainsText() bool {
 }
 
 func (ext *Extension) compile(sch *Schema, parentElement *Element) {
+	if ext.typ != nil {
+		return // already compiled
+	}
+
 	if ext.Sequence != nil {
 		ext.Sequence.compile(sch, parentElement)
 	}
@@ -92,5 +96,5 @@ func (ext *Extension) compile(sch *Schema, parentElement *Element) {
 	if ext.typ == nil {
 		panic("Cannot build xsd:extension: unknown type: " + string(ext.Base))
 	}
-	ext.typ.compile(sch, parentElement)
+	ext.typ.compile(sch, nil)
 }

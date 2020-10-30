@@ -24,9 +24,5 @@ func Convert(xsdPath, goModule, outputDir string, ignoredNamespaces []string, ig
 		}
 	}
 
-	if err := template.GenerateGlobals(ws, outputDir); err != nil {
-		return err
-	}
-
 	return nil
 }

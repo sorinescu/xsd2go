@@ -16,6 +16,10 @@ func (s *Sequence) Elements() []Element {
 }
 
 func (s *Sequence) compile(sch *Schema, parentElement *Element) {
+	if s.allElements != nil {
+		return // already compiled
+	}
+
 	for idx, _ := range s.ElementList {
 		el := &s.ElementList[idx]
 		el.compile(sch, parentElement)

@@ -4,86 +4,95 @@
 package {{ $packageName }}
 
 import (
-    {{- range .GoImportsNeeded}}
-        "{{ . }}"
-    {{- end }}
+  {{- range .GoImportsNeeded}}
+    "{{ . }}"
+  {{- end }}
 )
 
+{{- if .SubstitutingElements}}
 // SubstitutingElements
+{{- end}}
 {{- range $key, $val := .SubstitutingElements}}
 //   {{ $key.GoName }} substitutes {{ $val.GoName }}
 {{- end}}
 
+{{- if .SubstitutedElements}}
 // SubstitutedElements
+{{- end}}
 {{- range $key, $vals := .SubstitutedElements}}
 //   {{ $key.GoName }}
-    {{- range $vals}}
+  {{- range $vals}}
 //       substituted by {{.GoName }}
-    {{- end}}
+  {{- end}}
 {{- end}}
 
 {{range .ExportableElements }}
 // Element
 type {{ .GoTypeName }} struct {
-    XMLName xml.Name `xml:{{.Name}}`
+  XMLName xml.Name `xml:{{.Name}}`
 
-    {{- if .GoBaseTypeName}}
+  {{- if .SubstitutedElement}}
+    // SubstitutedElement
+    {{.SubstitutedElement.GoTypeName}}
+  {{- end}}
+
+  {{- if .GoBaseTypeName}}
     // BaseType
     {{.GoBaseTypeName}}
-    {{- end}}
+  {{- end}}
 
-    {{- if .Attributes}}
+  {{- if .Attributes}}
     // Attributes
-    {{- end}}
-    {{- range .Attributes }}
-        {{ .GoName }} string `xml:"{{.XmlName}},{{.Modifiers}}"`
-    {{- end }}
+  {{- end}}
+  {{- range .Attributes }}
+    {{ .GoName }} string `xml:"{{.XmlName}},{{.Modifiers}}"`
+  {{- end }}
 
-    {{- if .Elements}}
+  {{- if .Elements}}
     // Elements
-    {{- end}}
-    {{- range .Elements }}
-      {{ $el := . -}}
-      {{ .GoFieldName}} {{.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+  {{- end}}
+  {{- range .Elements }}
+    {{ $el := . -}}
+    {{ .GoFieldName}} {{.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
 
-      {{- range .SubstitutingElements }}
-        // Substitution for '{{ $el.GoName }}'
-        {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
-      {{- end }}
+    {{- range .SubstitutingElements }}
+      // Substitution for '{{ $el.GoName }}'
+      {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
     {{- end }}
+  {{- end }}
 
-    {{- if .ContainsText }}
-      // ContainsText
-      Text string `xml:",chardata"`
-    {{- end}}
+  {{- if .ContainsText }}
+    // ContainsText
+    Text string `xml:",chardata"`
+  {{- end}}
 }
 {{end}}
 
 // XSD ComplexType declarations
 {{range .ExportableComplexTypes }}
 type {{ .GoTypeName }} struct {
-    {{- if .GoBaseTypeName}}
+  {{- if .GoBaseTypeName}}
     // BaseType
     {{.GoBaseTypeName}}
-    {{- end}}
+  {{- end}}
 
-    {{- if .Attributes}}
+  {{- if .Attributes}}
     // Attributes
-    {{- end}}
-    {{- range .Attributes }}
+  {{- end}}
+  {{- range .Attributes }}
     {{ .GoName }} string `xml:"{{.XmlName}},{{.Modifiers}}"`
-    {{- end }}
+  {{- end }}
 
-    {{- if .Elements}}
+  {{- if .Elements}}
     // Elements
-    {{- end}}
+  {{- end}}
   {{- range .Elements }}
     {{ $el := . -}}
     {{ .GoFieldName}} {{.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
 
     {{- range .SubstitutingElements }}
-    // Substitution for '{{ $el.GoName }}'
-    {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
+      // Substitution for '{{ $el.GoName }}'
+      {{ .GoFieldName}} {{$el.GoMemLayout}}{{ .GoTypeName }} `xml:"{{.XmlName}}"`
     {{- end }}
   {{- end}}
 

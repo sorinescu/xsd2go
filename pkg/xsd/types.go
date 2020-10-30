@@ -86,6 +86,10 @@ func (ct *ComplexType) Schema() *Schema {
 }
 
 func (ct *ComplexType) compile(sch *Schema, parentElement *Element) {
+	if ct.schema != nil {
+		return // already compiled
+	}
+
 	ct.schema = sch
 	if ct.Sequence != nil {
 		ct.Sequence.compile(sch, parentElement)
@@ -162,6 +166,10 @@ func (st *SimpleType) Schema() *Schema {
 }
 
 func (st *SimpleType) compile(sch *Schema, parentElement *Element) {
+	if st.schema != nil {
+		return	// already compiled
+	}
+
 	st.schema = sch
 }
 
