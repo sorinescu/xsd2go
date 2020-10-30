@@ -29,7 +29,7 @@ var convert = cli.Command{
 		},
 		&cli.StringSliceFlag{
 			Name:  "ignoreSubst",
-			Usage: "Ignore XML element substitution; name is like 'http://oval.mitre.org/XMLSchema/oval-common-5:notes'",
+			Usage: "Ignore XML element substitution; name is like 'http://oval.mitre.org/XMLSchema/oval-common-5 notes'",
 		},
 	},
 	Before: func(c *cli.Context) error {

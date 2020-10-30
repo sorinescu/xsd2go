@@ -44,9 +44,18 @@ func parseSchema(f io.Reader, ignoredSubsts []string) (*Schema, error) {
 	}
 
 	for _, s := range ignoredSubsts {
-		parts := strings.Split(s, ":")
-		name := parts[len(parts)-1]
-		ns := strings.Join(parts[:len(parts)-1], ":")
+		parts := strings.Split(s, " ")
+
+		var name, ns string
+		switch len(parts) {
+		case 1:
+			name = parts[0]
+		case 2:
+			ns = parts[0]
+			name = parts[1]
+		default:
+			panic("Invalid ignored substitution '" + s + "'")
+		}
 
 		if schema.TargetNamespace == ns {
 			fmt.Printf("\t\tIgnoring substitution of %s in namespace %s\n", name, schema.TargetNamespace)
